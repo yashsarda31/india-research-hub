@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>India Research Hub</title>
+<link rel="stylesheet" href="style.css?v=20261107102532">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#/">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+      </span>
+      <span>India Research Hub</span>
+    </a>
+    <div class="search" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+      <svg class="search-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Search a stock — e.g. Tata Motors, HDFCBANK, Dixon…" aria-label="Search stocks">
+      <kbd class="hint">/</kbd>
+      <ul id="ac" class="ac" role="listbox" hidden></ul>
+    </div>
+    <nav class="nav">
+      <a href="#/all">All reports</a>
+      <a href="#/brokers">Brokers</a>
+    </nav>
+  </div>
+</header>
+
+<main id="view" class="wrap" tabindex="-1"></main>
+
+<footer class="wrap foot">
+  <p id="foot-meta"></p>
+  <p>Reports belong to their publishers and are kept here for personal reference only. Nothing here is investment advice.</p>
+</footer>
+
+<script src="data.js?v=20261107102532"></script>
+<script src="app.js?v=20261107102532"></script>
+</body>
+</html>
