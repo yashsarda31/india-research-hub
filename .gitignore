@@ -12,3 +12,6 @@ site/data.js
 __pycache__/
 *.pyc
 .claude/
+
+# Public GitHub Pages build output (published to the gh-pages branch)
+_pages/

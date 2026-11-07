@@ -34,6 +34,8 @@ SOURCE_LABELS = {
     "axisdirect": "Axis Direct", "angelone": "Angel One", "sbisec": "SBI Securities",
     "anandrathi": "Anand Rathi",
 }
+# Sources whose "symbol" field is a Bloomberg code rather than an NSE symbol.
+BLOOMBERG_CODE_SOURCES = {"nirmalbang", "plindia"}
 # Lower number wins when two sites describe the same report.
 SOURCE_PRIORITY = defaultdict(lambda: 5, {"inhouse": 0, "trendlyne": 9, "bsreports": 7,
                                           "moneycontrol": 7, "etmarkets": 8})
@@ -289,6 +291,12 @@ def main():
         sym = (r.get("symbol") or "").strip().upper() or None
         if sym and sym.endswith((".NS", ".BO")):
             sym = sym[:-3]
+        if sym and r["source"] in BLOOMBERG_CODE_SOURCES and r.get("company"):
+            # Bloomberg tickers ("BRIT" = Britannia) can collide with a different NSE symbol:
+            # trust the company name, keep the code only if it names the same company.
+            alt = m.match(r["company"])
+            same = sym in stocks and norm_name(r["company"]).split()[:1] == norm_name(stocks[sym]["name"]).split()[:1]
+            sym = alt or (sym if same else None)
         if sym and sym not in stocks:
             alt = m.match(r.get("company"))
             if alt:

@@ -5,6 +5,9 @@ and aggregators, downloads the public report PDFs, maps every report to its NSE 
 static website. Type a stock name, even with a typo, and see every broker's report on it: rating,
 target, implied move, summary and the PDF.
 
+**Live site: https://yashsarda31.github.io/india-research-hub/**
+The live site is the public, links-only version. Each report opens at the publisher's own page or PDF.
+
 The first build (7 Nov 2026) found **15,523 reports** on **967 stocks** from **43 brokers**, and
 saved 8,701 PDFs locally.
 
@@ -29,6 +32,15 @@ Double-click `site/index.html`, or run `serve.bat` (http://127.0.0.1:8790/site/)
 - a chart of targets through 2026
 - every report, with filters
 
+## Publish the public site
+`publish.bat` (or `python build/publish_pages.py`) builds a links-only copy in `_pages/` and
+force-pushes it to the `gh-pages` branch as a single commit, so the history doesn't grow. It also
+turns on GitHub Pages the first time. To refresh the data and publish in one go, run
+`update.bat --publish`. The public copy:
+- leaves out PDFs and summaries, and links to the original instead;
+- leaves out in-house reports;
+- doesn't deep-link past a publisher's sign-up form (Nirmal Bang).
+
 ## Sources
 | Works | Notes |
 |---|---|
@@ -50,7 +62,7 @@ Emkay (direct), Arihant, KR Choksey, Religare, and Motilal Oswal's own site.
 ## Layout
 ```
 scrapers/      one file per source; each writes data/raw/<source>.jsonl (shared schema in common.py)
-build/         fetch_ref.py · download_pdfs.py · build_site.py · update.py
+build/         fetch_ref.py · download_pdfs.py · build_site.py · update.py · publish_pages.py
 site/          index.html · app.js · style.css  (+ data.js, generated)
 data/, pdfs/   generated locally, git-ignored
 ```

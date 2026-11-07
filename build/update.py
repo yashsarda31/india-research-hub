@@ -35,7 +35,9 @@ def run(args, name):
 
 
 def main():
-    only = set(sys.argv[1:])
+    args = sys.argv[1:]
+    publish = "--publish" in args  # also push the public links-only copy to GitHub Pages
+    only = {a for a in args if not a.startswith("--")}
     scrapers = sorted(f for f in os.listdir(SCR) if f.endswith(".py") and f not in SKIP)
     if only:
         scrapers = [f for f in scrapers if f[:-3] in only]
@@ -49,6 +51,9 @@ def main():
     run([os.path.join(HERE, "download_pdfs.py")], "download_pdfs")
     print("Building site…", flush=True)
     run([os.path.join(HERE, "build_site.py")], "build_site")
+    if publish:
+        print("Publishing the public copy to GitHub Pages…", flush=True)
+        run([os.path.join(HERE, "publish_pages.py")], "publish_pages")
     print("Done. Open site/index.html (or run serve.bat).")
 
 

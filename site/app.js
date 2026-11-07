@@ -3,6 +3,9 @@
   const D = window.RH || { meta: {}, stocks: {}, reports: [] };
   const R = D.reports;
   const S = D.stocks;
+  // Public (GitHub Pages) build: no local PDFs or summaries, links go to the publishers.
+  const PUB = !!(D.meta && D.meta.public);
+  const hasPdf = (r) => (PUB ? !!r.pu : !!r.lp);
   const $ = (s, el = document) => el.querySelector(s);
   const view = $("#view");
 
@@ -225,7 +228,7 @@
         <button class="chip" data-r="pos" type="button">Buy</button>
         <button class="chip" data-r="neu" type="button">Hold</button>
         <button class="chip" data-r="neg" type="button">Sell</button>
-        <button class="chip" data-pdf type="button">${ICON.pdf} PDF saved</button>
+        <button class="chip" data-pdf type="button">${ICON.pdf} ${PUB ? "Has PDF" : "PDF saved"}</button>
         <span class="count"></span>
       </div>
       <ul class="rlist"></ul>
@@ -241,7 +244,7 @@
       cur = list.filter((r) => {
         if (st.b && r.b !== st.b) return false;
         if (st.r && r.rb !== st.r) return false;
-        if (st.pdf && !r.lp) return false;
+        if (st.pdf && !hasPdf(r)) return false;
         if (since && r.d < since) return false;
         if (qt.length) {
           const hay = (r._h ||= [r.t, r.s, r.c, r.b, r.ty, r.ra, r.su, r.sec, r.s && S[r.s] ? S[r.s][0] : ""].join(" ").toLowerCase());
@@ -310,12 +313,14 @@
     view.innerHTML = `
       <section class="hero">
         <h1>Every 2026 research report on Indian stocks, in one place.</h1>
-        <p>Search any NSE stock to see each broker's reports on it: rating, target price, summary and the PDF. Collected from ${Object.keys(m.sources || {}).length} sources, ${fmtD(first)} to ${fmtD(R.length ? R[0].d : "")}.</p>
+        <p>${PUB
+          ? `Search any NSE stock to see what each broker published on it: rating, target price and a link to the original report. Collected from ${Object.keys(m.sources || {}).length} public sources, ${fmtD(first)} to ${fmtD(R.length ? R[0].d : "")}. Updated ${fmtD((m.generated || "").slice(0, 10))}.`
+          : `Search any NSE stock to see each broker's reports on it: rating, target price, summary and the PDF. Collected from ${Object.keys(m.sources || {}).length} sources, ${fmtD(first)} to ${fmtD(R.length ? R[0].d : "")}.`}</p>
         <div class="stats">
           <div class="stat"><b>${num(R.length)}</b><span>research reports</span></div>
           <div class="stat"><b>${num(nStocks)}</b><span>stocks covered</span></div>
           <div class="stat"><b>${num(brokers.length)}</b><span>brokers &amp; research houses</span></div>
-          <div class="stat"><b>${num(m.n_pdfs || 0)}</b><span>PDFs saved on this computer</span></div>
+          <div class="stat"><b>${num(PUB ? R.filter((r) => r.pu).length : (m.n_pdfs || 0))}</b><span>${PUB ? "direct PDF links" : "PDFs saved on this computer"}</span></div>
         </div>
       </section>
       <div class="grid2">
@@ -397,7 +402,7 @@
     const med = median(c.tps);
     const ref = c.lastPrice ? c.lastPrice.pr : null;
     const up = med && ref ? (med / ref - 1) * 100 : null;
-    const pdfs = list.filter((r) => r.lp).length;
+    const pdfs = list.filter(hasPdf).length;
     const links = sym ? `
       <a class="btn" href="https://www.screener.in/company/${enc(sym)}/" target="_blank" rel="noopener noreferrer">${ICON.ext}Screener</a>
       <a class="btn" href="https://www.nseindia.com/get-quotes/equity?symbol=${enc(sym)}" target="_blank" rel="noopener noreferrer">${ICON.ext}NSE</a>` : "";
@@ -410,7 +415,7 @@
         <div class="links">${links}</div>
       </div>
       <section class="card cons">
-        <div><div class="lab">Reports in 2026</div><div class="val">${list.length}</div><div class="sub">${new Set(list.map((r) => r.b)).size} brokers · ${pdfs} PDF${pdfs === 1 ? "" : "s"} saved · latest ${fmtD(list[0].d)}</div></div>
+        <div><div class="lab">Reports in 2026</div><div class="val">${list.length}</div><div class="sub">${new Set(list.map((r) => r.b)).size} brokers · ${pdfs} PDF${pdfs === 1 ? "" : "s"}${PUB ? " linked" : " saved"} · latest ${fmtD(list[0].d)}</div></div>
         <div><div class="lab">Latest rating per broker (180 days)</div>
           ${tot ? `<div class="split"><i class="p" style="width:${(c.counts.pos / tot) * 100}%"></i><i class="u" style="width:${(c.counts.neu / tot) * 100}%"></i><i class="n" style="width:${(c.counts.neg / tot) * 100}%"></i></div>
           <div class="legend"><span><b>${c.counts.pos}</b> buy</span><span><b>${c.counts.neu}</b> hold</span><span><b>${c.counts.neg}</b> sell</span></div>` : `<div class="sub">No ratings published</div>`}
@@ -489,6 +494,13 @@
   window.addEventListener("hashchange", route);
 
   const m = D.meta || {};
-  $("#foot-meta").textContent = `Built ${m.generated || "?"} · ${num(R.length)} reports dated ${fmtD(m.min_date)} or later · run update.bat to refresh.`;
+  if (PUB) {
+    $("#foot-meta").innerHTML = `Updated ${fmtD((m.generated || "").slice(0, 10))} · ${num(R.length)} reports dated ${fmtD(m.min_date)} or later` +
+      (safeUrl(m.repo) ? ` · <a href="${esc(m.repo)}" rel="noopener">Source code on GitHub</a>` : "");
+    $("#foot-note").textContent = "This site indexes research that brokers have published publicly and links to the originals. " +
+      "It makes no recommendations of its own. Reports and their contents belong to their publishers. Nothing here is investment advice.";
+  } else {
+    $("#foot-meta").textContent = `Built ${m.generated || "?"} · ${num(R.length)} reports dated ${fmtD(m.min_date)} or later · run update.bat to refresh.`;
+  }
   route();
 })();
