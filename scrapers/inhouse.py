@@ -13,8 +13,25 @@ import fitz  # PyMuPDF
 
 from common import ROOT, Writer, make_record
 
-DL = os.path.dirname(ROOT)  # the folder that holds research-hub (your Downloads)
+DL = os.path.join(os.path.expanduser("~"), "Downloads")  # paths below are relative to this
 DEST = os.path.join(ROOT, "pdfs", "inhouse")
+_INDEX = None
+
+
+def locate(rel):
+    """Downloads gets reorganised, so: exact path, else same filename anywhere under Downloads."""
+    global _INDEX
+    src = os.path.join(DL, rel)
+    if os.path.exists(src):
+        return src
+    if _INDEX is None:
+        _INDEX = {}
+        for d, dirs, files in os.walk(DL):
+            dirs[:] = [x for x in dirs if x not in ("node_modules", ".git", "research-hub") and not x.startswith(".")]
+            for f in files:
+                if f.lower().endswith(".pdf"):
+                    _INDEX.setdefault(f, os.path.join(d, f))
+    return _INDEX.get(os.path.basename(rel))
 
 # (relative path, company, NSE symbol, date, title)
 REPORTS = [
@@ -35,6 +52,7 @@ REPORTS = [
     ("redington-research-2026-10-20/output/pdf/Redington-Equity-Research-2026-10-20.pdf", "Redington", "REDINGTON", "2026-10-20", "Redington: independent research"),
     ("reliance-equity-research-2026-10-22/Reliance_Industries_Equity_Research_2026-10-22.pdf", "Reliance Industries", "RELIANCE", "2026-10-22", "Reliance Industries: equity research"),
     ("Tata-Consumer-Research-2026-10-31/output/Tata-Consumer-Products-Equity-Research-2026-10-31.pdf", "Tata Consumer Products", "TATACONSUM", "2026-10-31", "Tata Consumer Products: equity research"),
+    ("shyam-metalics-research-2026-11-09/output/pdf/Equinox-Shyam-Metalics-2026-11-09.pdf", "Shyam Metalics and Energy", "SHYAMMETL", "2026-11-09", "Shyam Metalics: growth is real; cash conversion is the test (initiating coverage)"),
     ("Welspun-Living-Research-2026-11-04/output/pdf/Welspun-Living-Equinox-Research-2026-11-05.pdf", "Welspun Living", "WELSPUNLIV", "2026-11-05", "Welspun Living: recovery is real; the price asks for more"),
 ]
 
@@ -55,12 +73,16 @@ def main():
     os.makedirs(DEST, exist_ok=True)
     w = Writer("inhouse", fresh=True)
     for rel, company, sym, date, title in REPORTS:
-        src = os.path.join(DL, rel)
-        if not os.path.exists(src):
-            print("missing", src)
-            continue
         fn = f"{sym}-{date}.pdf"
-        shutil.copy2(src, os.path.join(DEST, fn))
+        src = locate(rel)
+        if src:
+            shutil.copy2(src, os.path.join(DEST, fn))
+        elif os.path.exists(os.path.join(DEST, fn)):
+            src = os.path.join(DEST, fn)  # source moved/deleted: keep the copy we already have
+            print("source not found, using stored copy", fn)
+        else:
+            print("missing", rel)
+            continue
         doc = fitz.open(src)
         p1 = doc[0].get_text()
         summary = re.sub(r"\s+", " ", " ".join(pg.get_text() for pg in doc[:2]))[:900]
